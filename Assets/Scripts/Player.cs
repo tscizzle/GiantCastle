@@ -6,8 +6,8 @@ public class Player : MonoBehaviour
 {
     private static float yawSpeed = 100;
     private static float pitchSpeed = 200;
-    private static float thrustMagnitude = Physics.gravity.magnitude * 2f;
-    private static float maxSpeed = 20;
+    private static float thrustMagnitude = Physics.gravity.magnitude * 4f;
+    private static float maxSpeed = 60;
     private static float brakeDrag = 10;
     private static float antiSlidingFriction = 10;
 
