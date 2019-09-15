@@ -5,7 +5,11 @@ using UnityEngine;
 public class GenerateCastle : MonoBehaviour
 {
     private static float cellSize = 200;
-    private static float numCellsFromPlayer = 5;
+    private static float numCellsFromPlayer = 20;
+    private static bool isInCastleZone(Vector3 cell)
+    {
+        return cell.x >= 0 && cell.z >= 0;
+    }
 
     private Dictionary<Vector3, List<GameObject>> cellsGenerated = new Dictionary<Vector3, List<GameObject>>();
     private Dictionary<Vector3, bool> cellsVisitedByPlayer = new Dictionary<Vector3, bool>();
@@ -29,18 +33,23 @@ public class GenerateCastle : MonoBehaviour
 
         if (needsAnyGenerating)
         {
-            Debug.Log($"Visiting new cell! {playerCurrentCell}");
-            for (float cellIdxX = -numCellsFromPlayer; cellIdxX < numCellsFromPlayer; cellIdxX++)
+            float startX = playerCurrentCell.x - numCellsFromPlayer;
+            float endX = playerCurrentCell.x + numCellsFromPlayer;
+            float startZ = playerCurrentCell.z - numCellsFromPlayer;
+            float endZ = playerCurrentCell.z + numCellsFromPlayer;
+
+            for (float cellIdxX = startX; cellIdxX <= endX; cellIdxX++)
             {
-                for (float cellIdxZ = -numCellsFromPlayer; cellIdxZ < numCellsFromPlayer; cellIdxX++)
+                for (float cellIdxZ = startZ; cellIdxZ <= endZ; cellIdxZ++)
                 {
                     Vector3 cell = new Vector3(cellIdxX, 0, cellIdxZ);
+
+
 
                     bool cellNeedsGenerating = !cellsGenerated.ContainsKey(cell);
 
                     if (cellNeedsGenerating)
                     {
-                        Debug.Log($"Generating a new cell: {cell}");
                         List<GameObject> cellGameObjects = generateCastleInCell(cell);
 
                         cellsGenerated.Add(cell, cellGameObjects);
@@ -61,7 +70,6 @@ public class GenerateCastle : MonoBehaviour
         Vector3 cellCenter = new Vector3(cellCenterX, 0, cellCenterZ);
         
         GameObject tower = Instantiate(towerPrefab, cellCenter, Quaternion.identity);
-        Debug.Log("INSTANTIATED, WHERES TYSON? WHERE IS HE?");
         cellGameObjects.Add(tower);
 
         return cellGameObjects;

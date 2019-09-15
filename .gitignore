@@ -60,6 +60,3 @@ crashlytics-build.properties
 
 # Visual Studio something directory
 .vscode/
-
-# Personal TODOs
-TODO.txt
