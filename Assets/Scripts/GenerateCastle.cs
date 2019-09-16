@@ -13,14 +13,18 @@ public class GenerateCastle : MonoBehaviour
 
     private Dictionary<Vector3, List<GameObject>> cellsGenerated = new Dictionary<Vector3, List<GameObject>>();
     private Dictionary<Vector3, bool> cellsVisitedByPlayer = new Dictionary<Vector3, bool>();
+    private bool hasEpicPersonBeenPlaced = false;
     private GameObject player;
+    private GameObject epicPerson;
 
-    public GameObject towerPrefab;
-    public GameObject wallPrefab;
+    public GameObject castleTowerPrefab;
+    public GameObject castleWallPrefab;
+    public GameObject castleFlatPrefab;
 
     void Start()
     {
         player = GameObject.Find("Player");
+        epicPerson = GameObject.Find("Epic Person");
     }
 
     void Update()
@@ -44,11 +48,11 @@ public class GenerateCastle : MonoBehaviour
                 {
                     Vector3 cell = new Vector3(cellIdxX, 0, cellIdxZ);
 
-
+                    bool cellIsInCastleZone = isInCastleZone(cell);
 
                     bool cellNeedsGenerating = !cellsGenerated.ContainsKey(cell);
 
-                    if (cellNeedsGenerating)
+                    if (cellIsInCastleZone && cellNeedsGenerating)
                     {
                         List<GameObject> cellGameObjects = generateCastleInCell(cell);
 
@@ -69,9 +73,58 @@ public class GenerateCastle : MonoBehaviour
         float cellCenterZ = (cell.z + 0.5f) * cellSize;
         Vector3 cellCenter = new Vector3(cellCenterX, 0, cellCenterZ);
         
-        GameObject tower = Instantiate(towerPrefab, cellCenter, Quaternion.identity);
-        cellGameObjects.Add(tower);
+        /* create a tower in this cell */
+
+        GameObject castleTower = createCastleTower(cellCenter);
+        cellGameObjects.Add(castleTower);
+
+        /* create a flat, with some probability, and at a random altitude */
+
+        float chanceOfFlat = 0.8f;
+        float rand = Random.Range(0.0f, 1.0f);
+        if (rand <= chanceOfFlat)
+        {
+            float cellRightX = (cell.x + 1) * cellSize;
+            float cellNorthZ = (cell.z + 1) * cellSize;
+            float castleFlatAltitude = Random.Range(-150, -50);
+            Vector3 castleFlatPosition = new Vector3(cellRightX, castleFlatAltitude, cellNorthZ);
+
+            GameObject castleFlat = createCastleFlat(castleFlatPosition, cellSize, cellSize);
+            cellGameObjects.Add(castleFlat);
+
+            /* if the person hasn't been placed yet, place them on this flat */
+
+            if (!hasEpicPersonBeenPlaced)
+            {
+                float castleFlatTop = castleFlatPosition.y + castleFlat.transform.localScale.y / 2;
+                epicPerson.transform.position = new Vector3(cellRightX, castleFlatTop, cellCenterZ + 1);
+
+                hasEpicPersonBeenPlaced = true;
+            }
+        }
 
         return cellGameObjects;
+    }
+
+    private GameObject createCastleTower(Vector3 position)
+    {
+        GameObject castleTower = Instantiate(castleTowerPrefab, position, Quaternion.identity);
+
+        castleTower.transform.parent = transform;
+
+        return castleTower;
+    }
+
+    private GameObject createCastleFlat(Vector3 position, float xLength, float zLength)
+    {
+        GameObject castleFlat = Instantiate(castleFlatPrefab, position, Quaternion.identity);
+        
+        float sameY = castleFlat.transform.localScale.y;
+
+        castleFlat.transform.localScale = new Vector3(xLength, sameY, zLength);
+
+        castleFlat.transform.parent = transform;
+        
+        return castleFlat;
     }
 }
