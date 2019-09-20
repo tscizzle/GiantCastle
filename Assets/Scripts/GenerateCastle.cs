@@ -69,6 +69,8 @@ public class GenerateCastle : MonoBehaviour
     {
         List<GameObject> cellGameObjects = new List<GameObject>();
 
+        float cellEastX = (cell.x + 1) * cellSize;
+        float cellNorthZ = (cell.z + 1) * cellSize;
         float cellCenterX = (cell.x + 0.5f) * cellSize;
         float cellCenterZ = (cell.z + 0.5f) * cellSize;
         Vector3 cellCenter = new Vector3(cellCenterX, 0, cellCenterZ);
@@ -78,16 +80,30 @@ public class GenerateCastle : MonoBehaviour
         GameObject castleTower = createCastleTower(cellCenter);
         cellGameObjects.Add(castleTower);
 
+        /* create walls along the outside of the castle */
+
+        if (cell.x == 0)
+        {
+            Vector3 castleWallNorthSouthPosition = new Vector3(cellCenterX, 0, cellNorthZ);
+            GameObject castleWallNorthSouth = createCastleWall(castleWallNorthSouthPosition, cellSize, true);
+            cellGameObjects.Add(castleWallNorthSouth);
+        }
+
+        if (cell.z == 0)
+        {
+            Vector3 castleWallEastWestPosition = new Vector3(cellEastX, 0, cellCenterZ);
+            GameObject castleWallEastWest = createCastleWall(castleWallEastWestPosition, cellSize, false);
+            cellGameObjects.Add(castleWallEastWest);
+        }
+
         /* create a flat, with some probability, and at a random altitude */
 
         float chanceOfFlat = 0.8f;
         float rand = Random.Range(0.0f, 1.0f);
         if (rand <= chanceOfFlat)
         {
-            float cellRightX = (cell.x + 1) * cellSize;
-            float cellNorthZ = (cell.z + 1) * cellSize;
             float castleFlatAltitude = Random.Range(-150, -50);
-            Vector3 castleFlatPosition = new Vector3(cellRightX, castleFlatAltitude, cellNorthZ);
+            Vector3 castleFlatPosition = new Vector3(cellEastX, castleFlatAltitude, cellNorthZ);
 
             GameObject castleFlat = createCastleFlat(castleFlatPosition, cellSize, cellSize);
             cellGameObjects.Add(castleFlat);
@@ -97,7 +113,7 @@ public class GenerateCastle : MonoBehaviour
             if (!hasEpicPersonBeenPlaced)
             {
                 float castleFlatTop = castleFlatPosition.y + castleFlat.transform.localScale.y / 2;
-                epicPerson.transform.position = new Vector3(cellRightX, castleFlatTop, cellCenterZ + 1);
+                epicPerson.transform.position = new Vector3(cellEastX, castleFlatTop, cellCenterZ + 1);
 
                 hasEpicPersonBeenPlaced = true;
             }
@@ -110,9 +126,27 @@ public class GenerateCastle : MonoBehaviour
     {
         GameObject castleTower = Instantiate(castleTowerPrefab, position, Quaternion.identity);
 
+        // put all castle objects inside the same container
         castleTower.transform.parent = transform;
 
         return castleTower;
+    }
+
+    private GameObject createCastleWall(Vector3 position, float length, bool isNorthSouth)
+    {
+        Quaternion rotation = isNorthSouth ? Quaternion.Euler(0, 90, 0) : Quaternion.identity;
+
+        GameObject castleWall = Instantiate(castleWallPrefab, position, rotation);
+
+        float sameY = castleWall.transform.localScale.y;
+        float sameZ = castleWall.transform.localScale.z;
+
+        castleWall.transform.localScale = new Vector3(length, sameY, sameZ);
+
+        // put all castle objects inside the same container
+        castleWall.transform.parent = transform;
+
+        return castleWall;
     }
 
     private GameObject createCastleFlat(Vector3 position, float xLength, float zLength)
@@ -123,6 +157,7 @@ public class GenerateCastle : MonoBehaviour
 
         castleFlat.transform.localScale = new Vector3(xLength, sameY, zLength);
 
+        // put all castle objects inside the same container
         castleFlat.transform.parent = transform;
         
         return castleFlat;

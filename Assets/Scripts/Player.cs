@@ -45,14 +45,23 @@ public class Player : MonoBehaviour
 
     private void thrust()
     {
-        bool isThrustOn = Input.GetKey(KeyCode.Z);
-
-        bool isMovingForward = Vector3.Dot(thisBody.velocity, transform.forward) > 0;
-        bool isAtMaxSpeed = isMovingForward && thisBody.velocity.magnitude >= maxSpeed;
-
-        if (isThrustOn && !isAtMaxSpeed)
+        bool isThrustForwardOn = Input.GetKey(KeyCode.Z);
+        bool isThrustBackwardOn = Input.GetKey(KeyCode.X);
+        
+        bool isThrustOn = isThrustForwardOn || isThrustBackwardOn;
+        if (!isThrustOn)
         {
-            Vector3 thrustDirection = transform.forward;
+            return;
+        }
+
+        float thrustSign = isThrustForwardOn ? 1 : -1;
+        Vector3 thrustDirection = transform.forward * thrustSign;
+
+        bool isMovingWithThrust = Vector3.Dot(thisBody.velocity, thrustDirection) > 0;
+        bool isAtMaxSpeed = isMovingWithThrust && thisBody.velocity.magnitude >= maxSpeed;
+
+        if (!isAtMaxSpeed)
+        {
             Vector3 thrustForce = thrustDirection * thrustMagnitude;
 
             thisBody.AddForce(thrustForce);
@@ -61,7 +70,7 @@ public class Player : MonoBehaviour
 
     private void brake()
     {
-        bool isBrakeOn = Input.GetKey(KeyCode.X);
+        bool isBrakeOn = Input.GetKey(KeyCode.Space);
         
         if (isBrakeOn)
         {
