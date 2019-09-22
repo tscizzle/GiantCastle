@@ -15,9 +15,9 @@ RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 9
   m_Fog: 1
-  m_FogColor: {r: 0.972549, g: 0.92941177, b: 0.8745098, a: 1}
+  m_FogColor: {r: 0.18654326, g: 0.23139907, b: 0.3018868, a: 0}
   m_FogMode: 3
-  m_FogDensity: 0.001
+  m_FogDensity: 0.002
   m_LinearFogStart: 1000
   m_LinearFogEnd: 100000
   m_AmbientSkyColor: {r: 0.012548953, g: 0.027233906, b: 0.05660379, a: 1}
@@ -541,6 +541,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   castleTowerPrefab: {fileID: 4305665105382318539, guid: cfe1b8af7ea0d08c3840ef6dd8ad2c46,
     type: 3}
+  castleTowerNoRoofPrefab: {fileID: 464523388596451297, guid: 965a809560f0377b0b8efed79b10dfab,
+    type: 3}
   castleWallPrefab: {fileID: 7414710969969615445, guid: 0ba3b28d7308d26e8a0a4fb2de210598,
     type: 3}
   castleFlatPrefab: {fileID: 856347246283102183, guid: 24ac41eb48832e0cbb4cdf5f36657db6,
@@ -608,7 +610,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 867830266}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 200, y: 350, z: -40}
+  m_LocalPosition: {x: 300, y: 200, z: -250}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 963194228}
@@ -748,8 +750,8 @@ Camera:
   m_GameObject: {fileID: 963194225}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 0.18654326, g: 0.23139907, b: 0.3018868, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
