@@ -17,7 +17,6 @@ public class GenerateCastle : MonoBehaviour
 
     private Dictionary<Vector3, List<GameObject>> cellsGenerated = new Dictionary<Vector3, List<GameObject>>();
     private Dictionary<Vector3, bool> cellsVisitedByPlayer = new Dictionary<Vector3, bool>();
-    private bool hasEpicPersonBeenPlaced = false;
     private GameObject player;
     private GameObject epicPerson;
 
@@ -65,7 +64,7 @@ public class GenerateCastle : MonoBehaviour
                     }
                 }
             }
-            
+
             cellsVisitedByPlayer.Add(playerCurrentCell, true);
         }
     }
@@ -79,7 +78,7 @@ public class GenerateCastle : MonoBehaviour
         float cellCenterX = (cell.x + 0.5f) * cellSize;
         float cellCenterY = 0;
         float cellCenterZ = (cell.z + 0.5f) * cellSize;
-        
+
         /* create a tower in this cell, at a random altitude */
 
         float chanceOfRoof = 0.2f;
@@ -93,7 +92,7 @@ public class GenerateCastle : MonoBehaviour
 
         GameObject castleTower = createCastleTower(castleTowerPosition, withRoof);
         cellGameObjects.Add(castleTower);
-        
+
         /* create a flat, with some probability, and at a random altitude */
 
         float chanceOfFlat = 0.8f;
@@ -169,11 +168,11 @@ public class GenerateCastle : MonoBehaviour
     private GameObject createCastleFlat(Vector3 position, float xLength, float zLength)
     {
         GameObject castleFlat = Instantiate(castleFlatPrefab, position, Quaternion.identity);
-        
+
         float sameY = castleFlat.transform.localScale.y;
 
         castleFlat.transform.localScale = new Vector3(xLength, sameY, zLength);
-        
+
         return castleFlat;
     }
 }

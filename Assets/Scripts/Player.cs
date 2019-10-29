@@ -1,25 +1,29 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System;
 using UnityEngine;
 
 public class Player : MonoBehaviour
 {
-    private static float yawSpeed = 100;
-    private static float pitchSpeed = 200;
-    private static float thrustMagnitude = Physics.gravity.magnitude * 4f;
-    private static float maxSpeed = 100;
-    private static float brakeDrag = 10;
-    private static float antiSlidingFriction = 10;
-
+    /* unity objects */
     private Rigidbody thisBody;
+    private Camera thisCamera;
+
+    /* state */
+    private string playerMode = "firstPerson"; // one of [ "firstPerson", "thirdPerson" ]
 
     void Start()
     {
         thisBody = GetComponent<Rigidbody>();
+        thisCamera = GetComponentInChildren<Camera>();
     }
 
     void FixedUpdate()
     {
+        setPlayerMode();
+
+        positionCamera();
+
+        /* may need versions of the below methods specific to third person player mode */
+
         steer();
 
         thrust();
@@ -29,8 +33,47 @@ public class Player : MonoBehaviour
         antiSliding();
     }
 
+    private void setPlayerMode()
+    {
+        Vector3 straightDown = new Vector3(0, -1, 0);
+        float nearDistance = 2;
+
+        bool isNearOverObject = Physics.Raycast(transform.position, straightDown, nearDistance);
+        
+        playerMode = isNearOverObject ? "thirdPerson" : "firstPerson";
+    }
+
+    private void positionCamera()
+    {
+        float firstPersonZoom = 0;
+        float thirdPersonZoom = -10;
+        float zoomSteps = 16;
+        float zoomDistancePerStep = (firstPersonZoom - thirdPersonZoom) / zoomSteps;
+
+        Vector3 cameraPosition = thisCamera.transform.localPosition;
+
+        if (playerMode == "firstPerson")
+        {
+            if (cameraPosition.z != firstPersonZoom)
+            {
+                float z = Math.Min(cameraPosition.z + zoomDistancePerStep, firstPersonZoom);
+                thisCamera.transform.localPosition = new Vector3(0, 0, z);
+            }
+        } else if (playerMode == "thirdPerson")
+        {
+            if (cameraPosition.z != thirdPersonZoom)
+            {
+                float z = Math.Max(cameraPosition.z - zoomDistancePerStep, thirdPersonZoom);
+                thisCamera.transform.localPosition = new Vector3(0, 0, z);
+            }
+        }
+    }
+
     private void steer()
     {
+        float yawSpeed = 100;
+        float pitchSpeed = 200;
+
         float thetaDelta = Input.GetAxis("Horizontal") * yawSpeed * Time.deltaTime;
         float phiDelta = Input.GetAxis("Vertical") * pitchSpeed * Time.deltaTime;
 
@@ -45,6 +88,9 @@ public class Player : MonoBehaviour
 
     private void thrust()
     {
+        float thrustMagnitude = Physics.gravity.magnitude * 4f;
+        float maxSpeed = 100;
+
         bool isThrustForwardOn = Input.GetKey(KeyCode.Z);
         bool isThrustBackwardOn = Input.GetKey(KeyCode.X);
         
@@ -70,6 +116,8 @@ public class Player : MonoBehaviour
 
     private void brake()
     {
+        float brakeDrag = 10;
+
         bool isBrakeOn = Input.GetKey(KeyCode.Space);
         
         if (isBrakeOn)
@@ -89,6 +137,8 @@ public class Player : MonoBehaviour
     */
     private void antiSliding()
     {
+        float antiSlidingFriction = 10;
+
         Vector3 velocityParallelToForward = Vector3.Project(thisBody.velocity, transform.forward);
 
         Vector3 velocityNormalToForward = thisBody.velocity - velocityParallelToForward;
