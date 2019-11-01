@@ -19,6 +19,7 @@ public class GenerateCastle : MonoBehaviour
     private Dictionary<Vector3, bool> cellsVisitedByPlayer = new Dictionary<Vector3, bool>();
     private GameObject player;
     private GameObject epicPerson;
+    private GameObject robotKyle;
 
     public GameObject castleTowerPrefab;
     public GameObject castleTowerNoRoofPrefab;
@@ -29,6 +30,7 @@ public class GenerateCastle : MonoBehaviour
     {
         player = GameObject.Find("Player");
         epicPerson = GameObject.Find("Epic Person");
+        robotKyle = GameObject.Find("Robot Kyle");
     }
 
     void Update()
@@ -128,6 +130,7 @@ public class GenerateCastle : MonoBehaviour
                 float castleWallTop = castleWallEastWest.transform.localScale.y / 2;
                 float castleWallFront = castleWallEastWestPosition.z + (-1 * castleWallEastWest.transform.localScale.z / 2);
                 epicPerson.transform.position = new Vector3(cellEastX, castleWallTop, castleWallFront + 1);
+                robotKyle.transform.position = new Vector3(cellEastX + 2, castleWallTop, castleWallFront + 1);
             }
         }
 
