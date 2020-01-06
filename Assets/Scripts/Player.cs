@@ -38,7 +38,14 @@ public class Player : MonoBehaviour
         Vector3 straightDown = new Vector3(0, -1, 0);
         float nearDistance = 2;
 
-        bool isNearOverObject = Physics.Raycast(transform.position, straightDown, nearDistance);
+        /*
+        use a layer mask to only look for collisions with objects the player can run on top of
+        (see https://docs.unity3d.com/ScriptReference/Physics.Raycast.html)
+        */
+        // Bit shift the index of the layer (8) to get a bit mask
+        int layerMask = 1 << 8;
+
+        bool isNearOverObject = Physics.Raycast(transform.position, straightDown, nearDistance, layerMask);
         
         playerMode = isNearOverObject ? "thirdPerson" : "firstPerson";
     }
@@ -46,7 +53,7 @@ public class Player : MonoBehaviour
     private void positionCamera()
     {
         float firstPersonZoom = 0;
-        float thirdPersonZoom = -10;
+        float thirdPersonZoom = -8;
         float zoomSteps = 16;
         float zoomDistancePerStep = (firstPersonZoom - thirdPersonZoom) / zoomSteps;
 

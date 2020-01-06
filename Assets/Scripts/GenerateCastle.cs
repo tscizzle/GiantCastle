@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class GenerateCastle : MonoBehaviour
 {
+    private static int castleLayer = 8;
     private static float cellSize = 200;
     private static float numCellsFromPlayer = 20;
     private static bool isInCastleZone(Vector3 cell)
@@ -130,7 +131,6 @@ public class GenerateCastle : MonoBehaviour
                 float castleWallTop = castleWallEastWest.transform.localScale.y / 2;
                 float castleWallFront = castleWallEastWestPosition.z + (-1 * castleWallEastWest.transform.localScale.z / 2);
                 epicPerson.transform.position = new Vector3(cellEastX, castleWallTop, castleWallFront + 1);
-                robotKyle.transform.position = new Vector3(cellEastX + 2, castleWallTop, castleWallFront + 1);
             }
         }
 
@@ -150,6 +150,7 @@ public class GenerateCastle : MonoBehaviour
 
         GameObject castleTower = Instantiate(towerPrefabToUse, position, Quaternion.identity);
 
+        castleTower.layer = castleLayer;
 
         return castleTower;
     }
@@ -165,6 +166,8 @@ public class GenerateCastle : MonoBehaviour
 
         castleWall.transform.localScale = new Vector3(length, sameY, sameZ);
 
+        castleWall.layer = castleLayer;
+
         return castleWall;
     }
 
@@ -175,6 +178,8 @@ public class GenerateCastle : MonoBehaviour
         float sameY = castleFlat.transform.localScale.y;
 
         castleFlat.transform.localScale = new Vector3(xLength, sameY, zLength);
+
+        castleFlat.layer = castleLayer;
 
         return castleFlat;
     }
