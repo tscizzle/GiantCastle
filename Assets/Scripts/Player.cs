@@ -6,6 +6,7 @@ public class Player : MonoBehaviour
     /* unity objects */
     private Rigidbody thisBody;
     private Camera thisCamera;
+    private Animator thisAnimator;
 
     /* state */
     private string playerMode = "firstPerson"; // one of [ "firstPerson", "thirdPerson" ]
@@ -14,6 +15,7 @@ public class Player : MonoBehaviour
     {
         thisBody = GetComponent<Rigidbody>();
         thisCamera = GetComponentInChildren<Camera>();
+        thisAnimator = GetComponentInChildren<Animator>();
     }
 
     void FixedUpdate()
@@ -48,6 +50,8 @@ public class Player : MonoBehaviour
         bool isNearOverObject = Physics.Raycast(transform.position, straightDown, nearDistance, layerMask);
         
         playerMode = isNearOverObject ? "thirdPerson" : "firstPerson";
+
+        thisAnimator.SetBool("isNearOverObject", isNearOverObject);
     }
 
     private void positionCamera()
