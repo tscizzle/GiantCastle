@@ -15,7 +15,7 @@ public class Player : MonoBehaviour
 
     /* state */
     private string playerMode; // one of [ "flyingMode", "runningMode", "divingMode" ]
-    private DateTimeOffset diveStartTime;
+    private DateTimeOffset recentDiveStartTime;
 
     void Start()
     {
@@ -78,14 +78,14 @@ public class Player : MonoBehaviour
                 // If previously in "runningMode" and no longer near over an object, go into
                 // "divingMode" and set diveStartTime.
                 playerMode = "divingMode";
-                diveStartTime = DateTimeOffset.UtcNow;
+                recentDiveStartTime = DateTimeOffset.UtcNow;
             } else if (playerMode == "divingMode")
             {
                 // If previously in "divingMode" stay in "divingMode" or go into "flyingMode" if it's been
                 // long enough since the dive started.
                 DateTimeOffset now = DateTimeOffset.UtcNow;
-                TimeSpan timeSinceDiveStart = now - diveStartTime;
-                if (timeSinceDiveStart.TotalSeconds >= diveTimeLength)
+                double timeSinceDiveStart = (now - recentDiveStartTime).TotalSeconds;
+                if (timeSinceDiveStart >= diveTimeLength)
                 {
                     playerMode = "flyingMode";
                 }
@@ -131,17 +131,30 @@ public class Player : MonoBehaviour
         float thetaDelta = Input.GetAxis("Horizontal") * yawSpeed * Time.deltaTime;
         float phiDelta = Input.GetAxis("Vertical") * pitchSpeed * Time.deltaTime;
 
+        // while diving, don't allow steering
+        if (playerMode == "divingMode")
+        {
+            thetaDelta = 0;
+            phiDelta = 0;
+        }
+
         Quaternion thetaRotation = getThetaRotation(thetaDelta);
         Quaternion phiRotation = getPhiRotation(phiDelta);
 
         Quaternion currentOrientation = transform.rotation;
         Quaternion newOrientation = currentOrientation * thetaRotation * phiRotation;
         
-        // if running on a surface, latch to a constant pitch angle
         if (playerMode == "runningMode") {
+            // if running on a surface, latch to a constant pitch angle
             float constantPitchAngle = 9;
             Vector3 newEuler = newOrientation.eulerAngles;
             newOrientation = Quaternion.Euler(constantPitchAngle, newEuler.y, newEuler.z);
+        } else if (playerMode == "divingMode")
+        {
+            // while diving, ignore user input for rotating up and down and instead hardcode the dive mechanics
+            float newPitchAngle = getPitchAngleDuringDive();
+            Vector3 newEuler = newOrientation.eulerAngles;
+            newOrientation = Quaternion.Euler(newPitchAngle, newEuler.y, newEuler.z);
         }
 
         thisBody.MoveRotation(newOrientation);
@@ -154,12 +167,19 @@ public class Player : MonoBehaviour
 
         bool isThrustForwardOn = Input.GetKey(KeyCode.Z);
         bool isThrustBackwardOn = Input.GetKey(KeyCode.X);
+
+        // while diving, automatically keep going forward
+        if (playerMode == "divingMode")
+        {
+            isThrustForwardOn = true;
+        }
         
         bool isThrustOn = isThrustForwardOn || isThrustBackwardOn;
         if (!isThrustOn)
         {
             return;
         }
+        // don't allow going backward while in running mode
         if (!isThrustForwardOn && playerMode == "runningMode") {
             return;
         }
@@ -255,7 +275,7 @@ public class Player : MonoBehaviour
     Adjusts theta in the spherical representation of the object's orientation, i.e. rotating about the world's straight up direction, like
     swiveling your neck right or left.
     */
-    Quaternion getThetaRotation(float angleDelta)
+    private Quaternion getThetaRotation(float angleDelta)
     {
         // desired transformation, as Euler angles using world directions. It's a rotation about world y.
         Vector3 globalEuler = Vector3.up * angleDelta;
@@ -272,7 +292,7 @@ public class Player : MonoBehaviour
     Adjusts phi in the spherical representation of the object's orientation, like moving your eyes up or down.
     Unlike when moving theta, this depends on the object's current orientation, so we don't use Quaternion.Inverse to account for it.
     */
-    Quaternion getPhiRotation(float angleDelta)
+    private Quaternion getPhiRotation(float angleDelta)
     {
         // desired transformation, as Euler angles using world directions. It's a rotation about the player's x.
         Vector3 localEuler =  -1 * Vector3.right * angleDelta;
@@ -280,5 +300,22 @@ public class Player : MonoBehaviour
         // desired transformation, as Quaternion
         Quaternion deltaRotation = Quaternion.Euler(localEuler);
         return deltaRotation;
+    }
+
+    /*
+    During the dive, we ignore user input for rotating up and down and instead directly set the pitch angle througout the dive.
+    Get how far we are through the dive using the current time and recentDiveStartTime and diveTimeLength, and based on how far
+    through the dive we are, return a pitch angle.
+    */
+    private float getPitchAngleDuringDive()
+    {
+        float startingDiveAngle = -15;
+        float endingDiveAngle = 90;
+
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        float timeSinceDiveStart = (float)(now - recentDiveStartTime).TotalSeconds;
+        float howFarThroughDive = timeSinceDiveStart / diveTimeLength;
+        float newPitchAngle = startingDiveAngle + (endingDiveAngle - startingDiveAngle) * howFarThroughDive;
+        return newPitchAngle;
     }
 }
