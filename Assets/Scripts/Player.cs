@@ -10,7 +10,7 @@ public class Player : MonoBehaviour
     private GameObject thisModel;
 
     /* state */
-    private string playerMode = "flyingMode"; // one of [ "flyingMode", "runningMode" ]
+    private string playerMode = "flyingMode"; // one of [ "flyingMode", "runningMode", "divingMode" ]
 
     void Start()
     {
@@ -51,7 +51,14 @@ public class Player : MonoBehaviour
 
         bool isNearOverObject = Physics.Raycast(transform.position, straightDown, nearDistance, layerMask);
         
-        playerMode = isNearOverObject ? "runningMode" : "flyingMode";
+        if (isNearOverObject)
+        {
+            playerMode = "runningMode";
+        } else
+        {
+            // if previously in "runningMode" and no longer near over an object, go into "divingMode"
+            playerMode = playerMode == "runningMode" ? "divingMode" : "flyingMode";
+        }
     }
 
     private void positionCamera()
@@ -63,14 +70,14 @@ public class Player : MonoBehaviour
 
         Vector3 cameraPosition = thisCamera.transform.localPosition;
 
-        if (playerMode == "flyingMode")
+        if (playerMode == "flyingMode" && false)
         {
             if (cameraPosition.z != firstPersonZoom)
             {
                 float z = Math.Min(cameraPosition.z + zoomDistancePerStep, firstPersonZoom);
                 thisCamera.transform.localPosition = new Vector3(0, 0, z);
             }
-        } else if (playerMode == "runningMode")
+        } else if (playerMode == "runningMode" || true)
         {
             if (cameraPosition.z != thirdPersonZoom)
             {
@@ -177,8 +184,10 @@ public class Player : MonoBehaviour
         float forwardSpeed = Math.Abs(Vector3.Dot(thisBody.velocity, transform.forward));
         bool isRunning = playerMode == "runningMode" && forwardSpeed >= 0.8;
         bool isStanding = playerMode == "runningMode" && forwardSpeed < 0.8;
+        bool isDiving = playerMode == "divingMode";
         thisAnimator.SetBool("isRunning", isRunning);
         thisAnimator.SetBool("isStanding", isStanding);
+        thisAnimator.SetBool("isDiving", isDiving);
 
         // lay flat forward while flying (but when switching between laying flat and not, do it smoothly)
         
