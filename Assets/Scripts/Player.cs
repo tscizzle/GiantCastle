@@ -9,7 +9,7 @@ public class Player : MonoBehaviour
     private Animator thisAnimator;
 
     /* state */
-    private string playerMode = "firstPerson"; // one of [ "firstPerson", "thirdPerson" ]
+    private string playerMode = "flyingMode"; // one of [ "flyingMode", "runningMode" ]
 
     void Start()
     {
@@ -49,7 +49,7 @@ public class Player : MonoBehaviour
 
         bool isNearOverObject = Physics.Raycast(transform.position, straightDown, nearDistance, layerMask);
         
-        playerMode = isNearOverObject ? "thirdPerson" : "firstPerson";
+        playerMode = isNearOverObject ? "runningMode" : "flyingMode";
 
         thisAnimator.SetBool("isNearOverObject", isNearOverObject);
     }
@@ -57,20 +57,20 @@ public class Player : MonoBehaviour
     private void positionCamera()
     {
         float firstPersonZoom = 0;
-        float thirdPersonZoom = -8;
+        float thirdPersonZoom = -7;
         float zoomSteps = 16;
         float zoomDistancePerStep = (firstPersonZoom - thirdPersonZoom) / zoomSteps;
 
         Vector3 cameraPosition = thisCamera.transform.localPosition;
 
-        if (playerMode == "firstPerson")
+        if (playerMode == "flyingMode")
         {
             if (cameraPosition.z != firstPersonZoom)
             {
                 float z = Math.Min(cameraPosition.z + zoomDistancePerStep, firstPersonZoom);
                 thisCamera.transform.localPosition = new Vector3(0, 0, z);
             }
-        } else if (playerMode == "thirdPerson")
+        } else if (playerMode == "runningMode")
         {
             if (cameraPosition.z != thirdPersonZoom)
             {
@@ -93,6 +93,13 @@ public class Player : MonoBehaviour
 
         Quaternion currentOrientation = transform.rotation;
         Quaternion newOrientation = currentOrientation * thetaRotation * phiRotation;
+        
+        // if running on a surface, latch to a constant pitch angle
+        if (playerMode == "runningMode") {
+            float constantPitchAngle = 5;
+            Vector3 newEuler = newOrientation.eulerAngles;
+            newOrientation = Quaternion.Euler(constantPitchAngle, newEuler.y, newEuler.z);
+        }
 
         thisBody.MoveRotation(newOrientation);
     }
@@ -110,6 +117,11 @@ public class Player : MonoBehaviour
         {
             return;
         }
+        
+        // don't allow moving backward in running mode
+        if (isThrustBackwardOn && playerMode == "runningMode") {
+            return;
+        }
 
         float thrustSign = isThrustForwardOn ? 1 : -1;
         Vector3 thrustDirection = transform.forward * thrustSign;
@@ -117,12 +129,13 @@ public class Player : MonoBehaviour
         bool isMovingWithThrust = Vector3.Dot(thisBody.velocity, thrustDirection) > 0;
         bool isAtMaxSpeed = isMovingWithThrust && thisBody.velocity.magnitude >= maxSpeed;
 
-        if (!isAtMaxSpeed)
-        {
-            Vector3 thrustForce = thrustDirection * thrustMagnitude;
-
-            thisBody.AddForce(thrustForce);
+        if (isAtMaxSpeed) {
+            return;
         }
+
+        Vector3 thrustForce = thrustDirection * thrustMagnitude;
+
+        thisBody.AddForce(thrustForce);
     }
 
     private void brake()
