@@ -194,7 +194,6 @@ public class Player : MonoBehaviour
             if (currentLocalEuler.x != flyingTilt)
             {
                 float x = Math.Min(currentLocalEuler.x + tiltDegreesPerStep, flyingTilt);
-                print(x);
                 thisModel.transform.localEulerAngles = new Vector3(x, 0, 0);
             }
         } else if (playerMode == "runningMode")
@@ -202,7 +201,6 @@ public class Player : MonoBehaviour
             if (currentLocalEuler.x != runningTilt)
             {
                 float x = Math.Max(currentLocalEuler.x - tiltDegreesPerStep, runningTilt);
-                print(x);
                 thisModel.transform.localEulerAngles = new Vector3(x, 0, 0);
             }
         }
