@@ -7,6 +7,7 @@ public class Player : MonoBehaviour
     private Rigidbody thisBody;
     private Camera thisCamera;
     private Animator thisAnimator;
+    private GameObject thisModel;
 
     /* state */
     private string playerMode = "flyingMode"; // one of [ "flyingMode", "runningMode" ]
@@ -16,6 +17,7 @@ public class Player : MonoBehaviour
         thisBody = GetComponent<Rigidbody>();
         thisCamera = GetComponentInChildren<Camera>();
         thisAnimator = GetComponentInChildren<Animator>();
+        thisModel = GameObject.Find("Model");
     }
 
     void FixedUpdate()
@@ -24,8 +26,6 @@ public class Player : MonoBehaviour
 
         positionCamera();
 
-        /* may need versions of the below methods specific to third person player mode */
-
         steer();
 
         thrust();
@@ -33,6 +33,8 @@ public class Player : MonoBehaviour
         brake();
 
         antiSliding();
+
+        animationStuff();
     }
 
     private void setPlayerMode()
@@ -50,17 +52,6 @@ public class Player : MonoBehaviour
         bool isNearOverObject = Physics.Raycast(transform.position, straightDown, nearDistance, layerMask);
         
         playerMode = isNearOverObject ? "runningMode" : "flyingMode";
-
-        float forwardSpeed = Vector3.Dot(thisBody.velocity, transform.forward);
-        bool isStanding = isNearOverObject && forwardSpeed < 0.8;
-
-        if (isNearOverObject && !isStanding)
-        {
-            Debug.Log($"ayieee: {forwardSpeed}");
-        }
-
-        thisAnimator.SetBool("isNearOverObject", isNearOverObject);
-        thisAnimator.SetBool("isStanding", isStanding);
     }
 
     private void positionCamera()
@@ -126,9 +117,7 @@ public class Player : MonoBehaviour
         {
             return;
         }
-        
-        // don't allow moving backward in running mode
-        if (isThrustBackwardOn && playerMode == "runningMode") {
+        if (!isThrustForwardOn && playerMode == "runningMode") {
             return;
         }
 
@@ -179,6 +168,44 @@ public class Player : MonoBehaviour
         Vector3 frictionForce = -1 * velocityNormalToForward * antiSlidingFriction;
         
         thisBody.AddForce(frictionForce);
+    }
+
+    private void animationStuff()
+    {   
+        // set animator parameters (for transitions)
+        
+        float forwardSpeed = Math.Abs(Vector3.Dot(thisBody.velocity, transform.forward));
+        bool isRunning = playerMode == "runningMode" && forwardSpeed >= 0.8;
+        bool isStanding = playerMode == "runningMode" && forwardSpeed < 0.8;
+        thisAnimator.SetBool("isRunning", isRunning);
+        thisAnimator.SetBool("isStanding", isStanding);
+
+        // lay flat forward while flying (but when switching between laying flat and not, do it smoothly)
+        
+        float flyingTilt = 90;
+        float runningTilt = 0;
+        float tiltSteps = 10;
+        float tiltDegreesPerStep = (flyingTilt - runningTilt) / tiltSteps;
+
+        Vector3 currentLocalEuler = thisModel.transform.localEulerAngles;
+        
+        if (playerMode == "flyingMode")
+        {
+            if (currentLocalEuler.x != flyingTilt)
+            {
+                float x = Math.Min(currentLocalEuler.x + tiltDegreesPerStep, flyingTilt);
+                print(x);
+                thisModel.transform.localEulerAngles = new Vector3(x, 0, 0);
+            }
+        } else if (playerMode == "runningMode")
+        {
+            if (currentLocalEuler.x != runningTilt)
+            {
+                float x = Math.Max(currentLocalEuler.x - tiltDegreesPerStep, runningTilt);
+                print(x);
+                thisModel.transform.localEulerAngles = new Vector3(x, 0, 0);
+            }
+        }
     }
 
     /*

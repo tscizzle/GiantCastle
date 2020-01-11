@@ -20,7 +20,6 @@ public class GenerateCastle : MonoBehaviour
     private Dictionary<Vector3, bool> cellsVisitedByPlayer = new Dictionary<Vector3, bool>();
     private GameObject player;
     private GameObject epicPerson;
-    private GameObject robotKyle;
 
     public GameObject castleTowerPrefab;
     public GameObject castleTowerNoRoofPrefab;
@@ -31,7 +30,6 @@ public class GenerateCastle : MonoBehaviour
     {
         player = GameObject.Find("Player");
         epicPerson = GameObject.Find("Epic Person");
-        robotKyle = GameObject.Find("Robot Kyle");
     }
 
     void Update()
