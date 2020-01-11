@@ -38,7 +38,7 @@ public class Player : MonoBehaviour
     private void setPlayerMode()
     {
         Vector3 straightDown = new Vector3(0, -1, 0);
-        float nearDistance = 2;
+        float nearDistance = 1;
 
         /*
         use a layer mask to only look for collisions with objects the player can run on top of
@@ -51,7 +51,10 @@ public class Player : MonoBehaviour
         
         playerMode = isNearOverObject ? "runningMode" : "flyingMode";
 
+        bool isStanding = isNearOverObject && thisBody.velocity.magnitude < 1;
+
         thisAnimator.SetBool("isNearOverObject", isNearOverObject);
+        thisAnimator.SetBool("isStanding", isStanding);
     }
 
     private void positionCamera()
@@ -96,7 +99,7 @@ public class Player : MonoBehaviour
         
         // if running on a surface, latch to a constant pitch angle
         if (playerMode == "runningMode") {
-            float constantPitchAngle = 5;
+            float constantPitchAngle = 9;
             Vector3 newEuler = newOrientation.eulerAngles;
             newOrientation = Quaternion.Euler(constantPitchAngle, newEuler.y, newEuler.z);
         }
@@ -126,8 +129,8 @@ public class Player : MonoBehaviour
         float thrustSign = isThrustForwardOn ? 1 : -1;
         Vector3 thrustDirection = transform.forward * thrustSign;
 
-        bool isMovingWithThrust = Vector3.Dot(thisBody.velocity, thrustDirection) > 0;
-        bool isAtMaxSpeed = isMovingWithThrust && thisBody.velocity.magnitude >= maxSpeed;
+        bool isMovingWithThrustDirection = Vector3.Dot(thisBody.velocity, thrustDirection) > 0;
+        bool isAtMaxSpeed = isMovingWithThrustDirection && thisBody.velocity.magnitude >= maxSpeed;
 
         if (isAtMaxSpeed) {
             return;
