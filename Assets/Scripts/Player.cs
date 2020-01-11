@@ -10,8 +10,8 @@ public class Player : MonoBehaviour
     private GameObject thisModel;
 
     /* constants */
-    private float diveTimeLength = 1.3f;
-    private float modelOffsetY = 0.5f;
+    private float diveTimeLength;
+    private float modelOffsetY;
 
     /* state */
     private string playerMode; // one of [ "flyingMode", "runningMode", "divingMode" ]
@@ -22,10 +22,19 @@ public class Player : MonoBehaviour
         thisBody = GetComponent<Rigidbody>();
         thisCamera = GetComponentInChildren<Camera>();
         thisAnimator = GetComponentInChildren<Animator>();
-        thisModel = GameObject.Find("Model");
+        thisModel = GameObject.Find("PlayerModel");
 
-        // TODO: set diveTimeLength based on the length of the animation clip "Dive"
-        // TODO: set modelOffsetY to the y localPosition of the Model in Player
+        // find diveTimeLength
+        foreach (AnimationClip clip in thisAnimator.runtimeAnimatorController.animationClips)
+        {
+            if (clip.name == "Dive")
+            {
+                diveTimeLength = clip.length;
+            }
+        }
+
+        // find modelOffsetY
+        modelOffsetY = thisModel.transform.localPosition.y;
     }
 
     void FixedUpdate()
