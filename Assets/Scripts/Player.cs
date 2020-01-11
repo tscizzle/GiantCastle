@@ -51,7 +51,13 @@ public class Player : MonoBehaviour
         
         playerMode = isNearOverObject ? "runningMode" : "flyingMode";
 
-        bool isStanding = isNearOverObject && thisBody.velocity.magnitude < 1;
+        float forwardSpeed = Vector3.Dot(thisBody.velocity, transform.forward);
+        bool isStanding = isNearOverObject && forwardSpeed < 0.8;
+
+        if (isNearOverObject && !isStanding)
+        {
+            Debug.Log($"ayieee: {forwardSpeed}");
+        }
 
         thisAnimator.SetBool("isNearOverObject", isNearOverObject);
         thisAnimator.SetBool("isStanding", isStanding);
