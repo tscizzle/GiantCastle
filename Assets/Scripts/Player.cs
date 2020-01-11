@@ -9,8 +9,13 @@ public class Player : MonoBehaviour
     private Animator thisAnimator;
     private GameObject thisModel;
 
+    /* constants */
+    private float diveTimeLength = 1.3f;
+    private float modelOffsetY = 0.5f;
+
     /* state */
-    private string playerMode = "flyingMode"; // one of [ "flyingMode", "runningMode", "divingMode" ]
+    private string playerMode; // one of [ "flyingMode", "runningMode", "divingMode" ]
+    private DateTimeOffset diveStartTime;
 
     void Start()
     {
@@ -18,6 +23,9 @@ public class Player : MonoBehaviour
         thisCamera = GetComponentInChildren<Camera>();
         thisAnimator = GetComponentInChildren<Animator>();
         thisModel = GameObject.Find("Model");
+
+        // TODO: set diveTimeLength based on the length of the animation clip "Dive"
+        // TODO: set modelOffsetY to the y localPosition of the Model in Player
     }
 
     void FixedUpdate()
@@ -56,8 +64,27 @@ public class Player : MonoBehaviour
             playerMode = "runningMode";
         } else
         {
-            // if previously in "runningMode" and no longer near over an object, go into "divingMode"
-            playerMode = playerMode == "runningMode" ? "divingMode" : "flyingMode";
+            if (playerMode == "runningMode")
+            {
+                // If previously in "runningMode" and no longer near over an object, go into
+                // "divingMode" and set diveStartTime.
+                playerMode = "divingMode";
+                diveStartTime = DateTimeOffset.UtcNow;
+            } else if (playerMode == "divingMode")
+            {
+                // If previously in "divingMode" stay in "divingMode" or go into "flyingMode" if it's been
+                // long enough since the dive started.
+                DateTimeOffset now = DateTimeOffset.UtcNow;
+                TimeSpan timeSinceDiveStart = now - diveStartTime;
+                if (timeSinceDiveStart.TotalSeconds >= diveTimeLength)
+                {
+                    playerMode = "flyingMode";
+                }
+            } else if (playerMode == "flyingMode")
+            {
+                // If previously in "flyingMode" stay in "flyingMode".
+                playerMode = "flyingMode";
+            }
         }
     }
 
@@ -65,19 +92,19 @@ public class Player : MonoBehaviour
     {
         float firstPersonZoom = 0;
         float thirdPersonZoom = -7;
-        float zoomSteps = 16;
+        float zoomSteps = 10;
         float zoomDistancePerStep = (firstPersonZoom - thirdPersonZoom) / zoomSteps;
 
         Vector3 cameraPosition = thisCamera.transform.localPosition;
 
-        if (playerMode == "flyingMode" && false)
+        if (playerMode == "flyingMode")
         {
             if (cameraPosition.z != firstPersonZoom)
             {
                 float z = Math.Min(cameraPosition.z + zoomDistancePerStep, firstPersonZoom);
-                thisCamera.transform.localPosition = new Vector3(0, 0, z);
+                thisCamera.transform.localPosition = new Vector3(0, modelOffsetY, z);
             }
-        } else if (playerMode == "runningMode" || true)
+        } else if (playerMode == "runningMode" || playerMode == "divingMode")
         {
             if (cameraPosition.z != thirdPersonZoom)
             {
@@ -198,7 +225,7 @@ public class Player : MonoBehaviour
 
         Vector3 currentLocalEuler = thisModel.transform.localEulerAngles;
         
-        if (playerMode == "flyingMode")
+        if (playerMode == "flyingMode" || playerMode == "divingMode")
         {
             if (currentLocalEuler.x != flyingTilt)
             {
