@@ -10,12 +10,13 @@ public class Player : MonoBehaviour
     private GameObject thisModel;
 
     /* constants */
+    private float runningPitchAngle = 9;
     private float diveTimeLength;
     private float modelOffsetY;
 
     /* state */
     private string playerMode; // one of [ "flyingMode", "runningMode", "divingMode" ]
-    private DateTimeOffset recentDiveStartTime;
+    private float recentDiveStartTime;
 
     void Start()
     {
@@ -78,13 +79,13 @@ public class Player : MonoBehaviour
                 // If previously in "runningMode" and no longer near over an object, go into
                 // "divingMode" and set diveStartTime.
                 playerMode = "divingMode";
-                recentDiveStartTime = DateTimeOffset.UtcNow;
+                recentDiveStartTime = Time.time;
             } else if (playerMode == "divingMode")
             {
                 // If previously in "divingMode" stay in "divingMode" or go into "flyingMode" if it's been
                 // long enough since the dive started.
-                DateTimeOffset now = DateTimeOffset.UtcNow;
-                double timeSinceDiveStart = (now - recentDiveStartTime).TotalSeconds;
+                float now = Time.time;
+                float timeSinceDiveStart = now - recentDiveStartTime;
                 if (timeSinceDiveStart >= diveTimeLength)
                 {
                     playerMode = "flyingMode";
@@ -106,6 +107,12 @@ public class Player : MonoBehaviour
 
         Vector3 cameraPosition = thisCamera.transform.localPosition;
 
+        // By default the camera is along the line (0, 0, z) and lined up with the player's orientation.
+        // In flying mode and running mode this remains true.
+        // In diving mode, it depends on when in the dive. At the start, the player leaps upward but
+        //      the camera stays at the angle is was in during running (instead of pointing upward).
+        //      Once the player pitches forward the camera goes back to lining up with the player.
+
         if (playerMode == "flyingMode")
         {
             if (cameraPosition.z != firstPersonZoom)
@@ -113,13 +120,43 @@ public class Player : MonoBehaviour
                 float z = Math.Min(cameraPosition.z + zoomDistancePerStep, firstPersonZoom);
                 thisCamera.transform.localPosition = new Vector3(0, modelOffsetY, z);
             }
-        } else if (playerMode == "runningMode" || playerMode == "divingMode")
+            
+        } else if (playerMode == "runningMode")
         {
             if (cameraPosition.z != thirdPersonZoom)
             {
                 float z = Math.Max(cameraPosition.z - zoomDistancePerStep, thirdPersonZoom);
                 thisCamera.transform.localPosition = new Vector3(0, 0, z);
             }
+            
+            thisCamera.transform.LookAt(transform.position);
+
+        } else if (playerMode == "divingMode")
+        {
+            Vector3 currentLocalEuler = transform.localEulerAngles;
+            float currentPitch = angle180To180(currentLocalEuler.x);
+            bool isPitchingForward = currentPitch >= runningPitchAngle;
+
+            if (isPitchingForward)
+            {
+                // have the camera act normally, which is lining up with the player
+
+                thisCamera.transform.localPosition = new Vector3(0, 0, thirdPersonZoom);
+            } else
+            {
+                // have the camera stay at the angle and relative position it was at during running, despite
+                // the player's orientation pointing upward
+
+                Vector3 currentOrientation = transform.localEulerAngles;
+                // rotateAngle will be about the player's x axis.
+                // It must be enough to get to flat (-currentOrientation.x) and then to the running angle
+                float rotateAngle = (-currentOrientation.x % 360) + runningPitchAngle;
+                Vector3 straightBehind = new Vector3(0, 0, thirdPersonZoom);
+                Vector3 newCameraPosition = Quaternion.AngleAxis(rotateAngle, Vector3.right) * straightBehind;
+                thisCamera.transform.localPosition = newCameraPosition;
+            }
+
+            thisCamera.transform.LookAt(transform.position);
         }
     }
 
@@ -146,9 +183,8 @@ public class Player : MonoBehaviour
         
         if (playerMode == "runningMode") {
             // if running on a surface, latch to a constant pitch angle
-            float constantPitchAngle = 9;
             Vector3 newEuler = newOrientation.eulerAngles;
-            newOrientation = Quaternion.Euler(constantPitchAngle, newEuler.y, newEuler.z);
+            newOrientation = Quaternion.Euler(runningPitchAngle, newEuler.y, newEuler.z);
         } else if (playerMode == "divingMode")
         {
             // while diving, ignore user input for rotating up and down and instead hardcode the dive mechanics
@@ -309,13 +345,28 @@ public class Player : MonoBehaviour
     */
     private float getPitchAngleDuringDive()
     {
-        float startingDiveAngle = -15;
-        float endingDiveAngle = 90;
+        float startingDiveAngle = -60;
+        float endingDiveAngle = 80;
 
-        DateTimeOffset now = DateTimeOffset.UtcNow;
-        float timeSinceDiveStart = (float)(now - recentDiveStartTime).TotalSeconds;
+        float now = Time.time;
+        float timeSinceDiveStart = now - recentDiveStartTime;
         float howFarThroughDive = timeSinceDiveStart / diveTimeLength;
         float newPitchAngle = startingDiveAngle + (endingDiveAngle - startingDiveAngle) * howFarThroughDive;
         return newPitchAngle;
+    }
+
+    private float angle180To180(float degrees)
+    {
+        float newDegrees = degrees % 360 < 0 ? degrees % 360 + 360 : degrees % 360;
+        if (newDegrees <= -180)
+        {
+            return newDegrees + 360;
+        } else if (newDegrees > 180)
+        {
+            return newDegrees - 360;
+        } else
+        {
+            return newDegrees;
+        }
     }
 }
